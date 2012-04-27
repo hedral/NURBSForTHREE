@@ -239,12 +239,29 @@ THREE.NURBSSurface = function ( points, knots, orders ) {
 /** NURBS Geometry
  *
  */
-THREE.NURBSGeometry = function ( surface, numPoints ) {
+THREE.NURBSSurfaceGeometry = function ( surface, numPointsU, numPointsV ) {
 
 	THREE.Geometry.call( this );
 
+  // Get Vertices
+  for (var i = 0; i < numPointsU; i++)
+  {
+    var di = i / numPointsU;
+    for (var j = 0; j <= numPointsV; j++)
+    {
+      var dj = j / numPointsV;
+
+      // TODO: Is this way of arranging the vertecis correct?
+      this.vertices.push(new THREE.Vertex(surface.getPoint(dj, di)));
+      this.vertices.push(new THREE.Vertex(surface.getPoint(dj, di + (1/numPointsU))));
+    }
+  }
+
+  // TODO: faces, normals, etc.
+
+
 	this.computeCentroids();
 };
-THREE.NURBSGeometry.prototype = new THREE.Geometry();
-THREE.NURBSGeometry.prototype.constructor = THREE.NURBSGeometry;
+THREE.NURBSSurfaceGeometry.prototype = new THREE.Geometry();
+THREE.NURBSSurfaceGeometry.prototype.constructor = THREE.NURBSSurfaceGeometry;
 

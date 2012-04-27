@@ -1,3 +1,18 @@
+// TODO: move these functions away from here
+function printVerticesPosition(v)
+{
+  for (i = 0; i < v.length; i++)
+  {
+    console.log(i + "\t" + v[i].position.x + ", " +
+                           v[i].position.y + ", " +
+                           v[i].position.z);
+  }
+}
+
+/**
+ * @author santiago ferreira / http://lirius.org/
+ */
+
 // ============================================================================
 // MISC UTILITY FUNCTIONS
 // ============================================================================
@@ -105,6 +120,7 @@ NURBSCurveBuilder = function ( curve, name ) {
 
   // curve mesh
   this.curveGeometry = new THREE.NURBSCurveGeometry( this.curve, 100);
+  this.curveGeometry.dynamic = true;
 
   this.curveMaterial = new THREE.LineBasicMaterial(
                            {color:     0x550000,
@@ -544,46 +560,15 @@ NURBSSurfaceBuilder.prototype.buildControlPoints = function( ) {
 };
 
 /** Builds NURBS surface mesh
- *  TODO: implement NURBSGeometry
  */
 NURBSSurfaceBuilder.prototype.buildSurface = function( ) {
 
-  this.meshVertices = new Array();
+  var surfLineMaterial = new THREE.LineBasicMaterial( {color:     0x550000,
+                                                       opacity:   1,
+                                                       linewidth: 1});
 
-  var num_i = 30;
-  var num_j = 30;
-
-  // Get Geometry Points
-  var arrayIndex = 0;
-  for (var i = 0; i < num_i; i++)
-  {
-    var di = i / num_i;
-    this.meshVertices[arrayIndex] = new Array();
-
-    for (var j = 0; j <= num_j; j++)
-    {
-      var dj = j / num_j;
-      this.meshVertices[arrayIndex].push(
-        new THREE.Vertex(this.surface.getPoint( dj, di )));
-      this.meshVertices[arrayIndex].push(
-        new THREE.Vertex(this.surface.getPoint( dj, di + 1 / num_i )));
-    }
-    arrayIndex++;
-  }
-
-  this.surfMaterial = new THREE.LineBasicMaterial(
-                           {color:     0x550000,
-                            opacity:   1,
-                            linewidth: 1});
-
-  this.surfMesh = new THREE.Object3D();
-  for (var i = 0; i < this.meshVertices.length; i++) {
-    var tempGeom = new THREE.Geometry();
-    tempGeom.vertices = this.meshVertices[i];
-
-    var tempMesh = new THREE.Line( tempGeom, this.surfMaterial );
-    this.surfMesh.add(tempMesh);
-  }
+  var surfGeom = new THREE.NURBSSurfaceGeometry( this.surface, 30, 30 );
+  this.surfMesh = new THREE.Line( surfGeom, surfLineMaterial );
 };
 
 NURBSSurfaceBuilder.prototype.addToScene = function( scene ) {
