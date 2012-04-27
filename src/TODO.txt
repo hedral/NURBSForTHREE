@@ -1,1 +1,16 @@
+================================================================================
+FEATURES AND BUGS
+================================================================================
+modifying control points for surfaces and rebuilding it
+
+  1) modify one control point and then try rebuilding surface
+  2) keep better indexing of controlPointsGroup, it needs to be 2D
+  3) move and update control points interactively
+
+
+make NURBSSurfaceBoxGeometry
+
+================================================================================
+CLEANNING UP
+================================================================================
 remove all this.name members
