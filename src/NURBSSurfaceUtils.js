@@ -1,250 +1,5 @@
-// TODO: move these functions away from here
-function printVerticesPosition(v)
-{
-  for (i = 0; i < v.length; i++)
-  {
-    console.log(i + "\t" + v[i].position.x + ", " +
-                           v[i].position.y + ", " +
-                           v[i].position.z);
-  }
-}
-
-/**
- * @author santiago ferreira / http://lirius.org/
- */
-
 // ============================================================================
-// MISC UTILITY FUNCTIONS
-// ============================================================================
-
-/** converts worldPos to screen coordinates **/
-function worldToScreen ( worldPos ) {
-
-  var windowHalfX = window.innerWidth  / 2;
-  var windowHalfY = window.innerHeight / 2;
-
-  var screenPos = worldPos.clone();
-  projector.projectVector( screenPos, camera );
-  screenPos.x = ( screenPos.x + 1 ) * windowHalfX;
-  screenPos.y = ( - screenPos.y + 1) * windowHalfY;
-  return screenPos;
-}
-
-// TODO: this is not working
-function screenToWorld ( screenPos ) {
-
-  var windowHalfX = window.innerWidth  / 2;
-  var windowHalfY = window.innerHeight / 2;
-
-  var worldPos = screenPos.clone();
-  worldPos.x = worldPos.x / windowHalfX - 1;
-  worldPos.y = - worldPos.y / windowHalfY + 1;
-  projector.unprojectVector( worldPos, camera );
-  return worldPos;                    
-}
-
-/**
- * @param A a point in the line
- * @param V line direction vector, Note: V returns normalized
- * @param P point outside of the line
- * @returns vector from P to line defined by A and V
- */
-function vectorFromLineToPoint ( A, V, P ) {
-
-  V.normalize();
-  var A_minus_P = new THREE.Vector3(0,0,0);
-  A_minus_P.x = A.x - P.x;
-  A_minus_P.y = A.y - P.y;
-  A_minus_P.z = A.z - P.z;
-
-  var A_minus_P_dot_V = A_minus_P.x * V.x +
-                        A_minus_P.y * V.y +
-                        A_minus_P.z * V.z;
-
-  var A_minus_P_dot_V_times_V = new THREE.Vector3(0,0,0);
-  A_minus_P_dot_V_times_V.x = A_minus_P_dot_V * V.x;
-  A_minus_P_dot_V_times_V.y = A_minus_P_dot_V * V.y;
-  A_minus_P_dot_V_times_V.z = A_minus_P_dot_V * V.z;
-
-  // v: vector from point to line
-  var v = new THREE.Vector3(0,0,0);
-  v.x = A_minus_P_dot_V_times_V.x - A_minus_P.x ;
-  v.y = A_minus_P_dot_V_times_V.y - A_minus_P.y ;
-  v.z = A_minus_P_dot_V_times_V.z - A_minus_P.z ;
-
-  return v;
-};
-
-
-
-// ============================================================================
-// NURBS CURVES
-// ============================================================================
-
-/**
- * Defines NURBS bounding box geometry
- * @param curve NURBSCurve object
- */
-THREE.NURBSCurveBoxGeometry = function ( curve ) {
-
-  THREE.Geometry.call( this );
-
-  var scope = this;
-
-  // TODO: check for type
-  this.curve = curve || new THREE.NURBSCurve();
-
-  this.vertices = new Array();
-
-  //for ( p in this.curve.points ) {
-  for (p = 0; p < this.curve.points.length; p++) {
-
-    this.vertices.push( new THREE.Vertex(this.curve.points[p]) );
-
-  }
-};
-THREE.NURBSCurveBoxGeometry.prototype = new THREE.Geometry();
-THREE.NURBSCurveBoxGeometry.prototype.constructor =
-  THREE.NURBSCurveBoxGeometry;
-
-
-/**
- * Builds NURBS curve, its bounding box and its control points.
- * This is meant to be used as a tool for modelling NURBS curves interactively
- * @param curve THREE.NURBSCurve object
- */
-NURBSCurveBuilder = function ( curve, name ) {
-
-  this.curve = curve || THREE.NURBSCurve();
-  this.name = name || "";
-
-  // curve mesh
-  this.curveGeometry = new THREE.NURBSCurveGeometry( this.curve, 100);
-  this.curveGeometry.dynamic = true;
-
-  this.curveMaterial = new THREE.LineBasicMaterial(
-                           {color:     0x550000,
-                            opacity:   1,
-                            linewidth: 3});
-
-  this.curveMesh = new THREE.Line( this.curveGeometry, this.curveMaterial );
-  this.curveMesh.name = this.name + "_curve";
-  
-
-  // bounding box
-  this.boundBoxGeometry = new THREE.NURBSCurveBoxGeometry(this.curve);
-
-  this.boundBoxMaterial = new THREE.LineBasicMaterial(
-                              {color: 0x005555,
-                               opacity: 1,
-                               linewidth: 1});
-
-  this.boundBoxMesh = new THREE.Line(this.boundBoxGeometry,
-                                     this.boundBoxMaterial);
-
-  this.boundBoxMesh.name = this.name + "_bbox";
-  
-  
-  // control points
-  // TODO: better way to determine radius of control points
-  controlPointRadius = (this.curveGeometry.boundingSphere.radius) * 0.0125;
-  this.controlPointGeometry = new THREE.SphereGeometry( controlPointRadius );
-
-  this.controlPointsGroup = new THREE.Object3D();
-
-  for (p in this.curve.points) {
-  
-    this.cPointMaterial = new THREE.MeshBasicMaterial( { color: 0x006699,
-                                                         opacity: 1 } );
-
-    var cPoint  = new THREE.Mesh( this.controlPointGeometry,
-                                  this.cPointMaterial );
-
-    cPoint.translateX( this.curve.points[p].x );
-    cPoint.translateY( this.curve.points[p].y );
-    cPoint.translateZ( this.curve.points[p].z );
-    
-    cPoint.name = this.name + "_cpoint_" + p;
-
-    this.controlPointsGroup.add( cPoint );
-  }
-};
-
-NURBSCurveBuilder.prototype.addToScene = function( scene ) {
-
-  scene.add( this.curveMesh );
-  scene.add( this.boundBoxMesh );
-  scene.add( this.controlPointsGroup );
-};
-
-
-/** Fills screenCoord array with the screen coordinates corresponding to the 
- *  curve's control points
- */
-NURBSCurveBuilder.prototype.updateScreenCoordinates = function() {
-
-  // define screenCoord in NURBSCurveBuilder constructor and update here
-  this.screenCoord = new Array();
-  for ( p = 0; p < this.controlPointsGroup.children.length; p++ ) {
-
-    this.screenCoord.push(
-      worldToScreen(this.controlPointsGroup.children[p].position) );
-  }
-};
-
-/**
- * Moves control point cpIndex with vector v
- */
-NURBSCurveBuilder.prototype.moveControlPoint = function( cpIndex, v ) {
-
-  if (cpIndex >= 0 && cpIndex < this.controlPointsGroup.children.length) {
-
-    // control point
-    var cp = this.controlPointsGroup.children[cpIndex];
-    cp.position.addSelf(v);
-
-    // bounding box and curve
-    var bb = this.boundBoxMesh.geometry.vertices[cpIndex];
-    bb.position.addSelf(v);
-  }
-};
-
-// TODO: this function needs to be optimized, it is not necessary to 
-//       rebuild the whole curve, only the affected spans
-NURBSCurveBuilder.prototype.rebuild = function( ) {
-
-  v = this.curveGeometry.vertices;
-  n = this.curveGeometry.numPoints;
-
-  for (var i = 0; i < n; i++)
-    v.push(new THREE.Vertex(this.curve.getPoint(i / (n-1))));
-
-  this.curveGeometry.vertices.splice(0, n);
-};
-
-/**
- * Set control point cpIndex to point p
- */
-NURBSCurveBuilder.prototype.setControlPoint = function( cpIndex, p ) {
-
-  if (cpIndex >= 0 && cpIndex < this.controlPointsGroup.children.length) {
-
-    // control point
-    var cp = this.controlPointsGroup.children[cpIndex];
-    cp.position = p;
-
-    // bounding box and curve
-    var bb = this.boundBoxMesh.geometry.vertices[cpIndex];
-    bb.position = p;
-  }
-};
-
-
-
-
-
-// ============================================================================
-// NURBS SURFACES
+// NURBS SURFACES UTILITIES
 // ============================================================================
 
 // TODO: create bound box geometry like with NURBS curves
@@ -493,6 +248,7 @@ NURBSSurfaceBuilder.prototype.doRotate = function( curve, line ) {
 
 
 /** Builds bounding box for this NURBS surface
+ * TODO: create bound box geometry NURBSSurfaceBoxGeometry
  */
 NURBSSurfaceBuilder.prototype.buildBoundBox = function( ) {
   this.bbGeom = new Array();
@@ -535,6 +291,8 @@ NURBSSurfaceBuilder.prototype.buildControlPoints = function( ) {
   // TODO: relative controlPointRadius
   var controlPointRadius = 0.05;
   this.controlPointGeometry = new THREE.SphereGeometry( controlPointRadius );
+  // STOP TODO controlPointsGroup needs to be a 2D array and correspond to 
+  //           points[][]
   this.controlPointsGroup = new THREE.Object3D();
 
   for (var i = 0; i < this.surface.points.length; i++)
@@ -568,6 +326,10 @@ NURBSSurfaceBuilder.prototype.buildSurface = function( ) {
                                                        linewidth: 1});
 
   var surfGeom = new THREE.NURBSSurfaceGeometry( this.surface, 30, 30 );
+
+  // TODO: remove from here
+  surfGeom.dynamic = true;
+
   this.surfMesh = new THREE.Line( surfGeom, surfLineMaterial );
 };
 
@@ -599,8 +361,9 @@ NURBSSurfaceBuilder.prototype.moveControlPoint = function(cpIndex, v) {
     var cp = this.controlPointsGroup.children[cpIndex];
     cp.position.addSelf(v);
 
-    // TODO
-    //console.log("NURBSSurfaceBuilder.moveControlPoint.cpIndex: " + cpIndex);
+    // STOP cpIndex needs to be a 2D index, use screenCoord instead
+    console.log("NURBSSurfaceBuilder.moveControlPoint: " + cpIndex + ": " + 
+    this.surface.points[0][0]);
     //// bounding box and curve
     //bb = this.surface.points[0][0];
     //bb.addSelf(v);
@@ -610,6 +373,10 @@ NURBSSurfaceBuilder.prototype.moveControlPoint = function(cpIndex, v) {
 
 // TODO:
 NURBSSurfaceBuilder.prototype.rebuild = function( ) {
+
+  console.log("NURBSSurfaceBuilder.rebuild()");
+  //console.log(this.surface.points[0][0].x);
+  //printArrayOfVector3(this.surface.points[0]);
 
   //this.surfMesh.children = [];
   //this.buildBoundBox();

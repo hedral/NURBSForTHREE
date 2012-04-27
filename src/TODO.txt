@@ -1,0 +1,1 @@
+remove all this.name members
