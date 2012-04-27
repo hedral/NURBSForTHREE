@@ -11,7 +11,7 @@ Surface modelling mechanisms
 ===============================
 
 There are three mechanisms for the modelling of surfaces: sweep, sum and rotate. 
-(Look at src/NURBSSurfaceUtils.js:NURBSBuilder)
+(Look at src/NURBSSurfaceUtils.js:NURBSSurfaceBuilder)
 
 sweep can be used to create a surface by 'sweeping' a NURBS curve along a 
 vector.
