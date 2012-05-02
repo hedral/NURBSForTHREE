@@ -13,6 +13,7 @@
  *                  if technique = 1, then: auxParam should be the summing curve
  *                  if technique = 2, then: auxParam should be an array defining
  *                                          the axis of ratation
+ *
  *                                          
  */
 NURBSSurfaceBuilder = function ( curve, technique, auxParam, name ) {
@@ -269,6 +270,9 @@ NURBSSurfaceBuilder.prototype.buildBoundBox = function( ) {
     this.bbGeom[i] = new THREE.Geometry();
     for (var j = 0; j < this.surface.points[0].length; j++)
       this.bbGeom[i].vertices.push( new THREE.Vertex(this.surface.points[i  ][j  ]) );
+      // TODO: bbGeom[].vertices references surface.points...
+      //       It could be nice if control points spheres posisitions were a
+      //       reference too
 
     this.bbMeshU.add( new THREE.Line(this.bbGeom[i], this.bbMatU) );
   }
@@ -291,13 +295,13 @@ NURBSSurfaceBuilder.prototype.buildControlPoints = function( ) {
   // TODO: relative controlPointRadius
   var controlPointRadius = 0.05;
   this.controlPointGeometry = new THREE.SphereGeometry( controlPointRadius );
-  // STOP TODO controlPointsGroup needs to be a 2D array and correspond to 
-  //           points[][]
   this.controlPointsGroup = new THREE.Object3D();
+  this.controlPointsIndices = new Array();
 
   for (var i = 0; i < this.surface.points.length; i++)
   {
     this.bbGeom[i] = new THREE.Geometry();
+    this.controlPointsIndices[i] = new Array();
     for (var j = 0; j < this.surface.points[0].length; j++)
     {
       this.cPointMaterial = new THREE.MeshBasicMaterial( { color: 0x006699,
@@ -312,6 +316,7 @@ NURBSSurfaceBuilder.prototype.buildControlPoints = function( ) {
       //cPoint.name = this.name + "_cpoint_" + p;
 
       this.controlPointsGroup.add( cPoint );
+      this.controlPointsIndices[i][j] = cPoint;
     }
 
   }
@@ -352,7 +357,6 @@ NURBSSurfaceBuilder.prototype.updateScreenCoordinates = function() {
   }
 };
 
-// TODO: not working
 NURBSSurfaceBuilder.prototype.moveControlPoint = function(cpIndex, v) {
 
   if (cpIndex >= 0 && cpIndex < this.controlPointsGroup.children.length) {
@@ -361,27 +365,33 @@ NURBSSurfaceBuilder.prototype.moveControlPoint = function(cpIndex, v) {
     var cp = this.controlPointsGroup.children[cpIndex];
     cp.position.addSelf(v);
 
-    // STOP cpIndex needs to be a 2D index, use screenCoord instead
-    console.log("NURBSSurfaceBuilder.moveControlPoint: " + cpIndex + ": " + 
-    this.surface.points[0][0]);
-    //// bounding box and curve
-    //bb = this.surface.points[0][0];
-    //bb.addSelf(v);
-    //this.surface.points
+    console.log("NURBSSurfaceBuilder.moveControlPoint: " + cpIndex);
+
+    // find 2D control point index in controlPointsIndices
+    var controlPoint = this.controlPointsGroup.children[cpIndex];
+    var found = false;
+    for (var i in this.controlPointsIndices)
+    {
+      for (var j in this.controlPointsIndices[i])
+      {
+        if (this.controlPointsIndices[i][j] == this.controlPointsGroup.children[cpIndex])
+        {
+          console.log(i + ", " + j);
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    console.log(i + ", " + j);
+    // bounding box and curve
+    this.bbMeshU.children[i].geometry.vertices[j].position.addSelf(v);
+    //console.log(this.surface.points[i][j].x);
   }
 };
 
-// TODO:
 NURBSSurfaceBuilder.prototype.rebuild = function( ) {
 
-  console.log("NURBSSurfaceBuilder.rebuild()");
-  //console.log(this.surface.points[0][0].x);
-  //printArrayOfVector3(this.surface.points[0]);
-
-  //this.surfMesh.children = [];
-  //this.buildBoundBox();
-  //this.buildControlPoints();
-
-  //this.buildSurface();
-  //this.surfMesh.children.splice(0, this.surfMesh.children.length-1);
+  var n = this.surfMesh.geometry.vertices.length;
+  this.surfMesh.geometry.build();
 };

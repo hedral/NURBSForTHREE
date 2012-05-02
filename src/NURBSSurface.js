@@ -101,7 +101,6 @@ THREE.NURBSSurface = function ( points, knots, orders ) {
   };
 };
 
-// TODO
 /** NURBS Geometry
  *
  */
@@ -109,24 +108,36 @@ THREE.NURBSSurfaceGeometry = function ( surface, numPointsU, numPointsV ) {
 
 	THREE.Geometry.call( this );
 
-  // Get Vertices
-  for (var i = 0; i < numPointsU; i++)
-  {
-    var di = i / numPointsU;
-    for (var j = 0; j <= numPointsV; j++)
-    {
-      var dj = j / numPointsV;
+  this.surface = surface;
+  this.numPointsU = numPointsU;
+  this.numPointsV = numPointsV;
 
-      // TODO: Is this way of arranging the vertecis correct?
-      this.vertices.push(new THREE.Vertex(surface.getPoint(dj, di)));
-      this.vertices.push(new THREE.Vertex(surface.getPoint(dj, di + (1/numPointsU))));
-    }
-  }
-
-  // TODO: faces, normals, etc.
-
+  this.build();
 
 	this.computeCentroids();
 };
 THREE.NURBSSurfaceGeometry.prototype = new THREE.Geometry();
 THREE.NURBSSurfaceGeometry.prototype.constructor = THREE.NURBSSurfaceGeometry;
+
+THREE.NURBSSurfaceGeometry.prototype.build = function()
+{
+  // do we need to rebuild it?
+  if (this.vertices.length > 0)
+    this.vertices.splice(0, this.vertices.length);
+
+  // Get Vertices
+  for (var i = 0; i < this.numPointsU; i++)
+  {
+    var di = i / this.numPointsU;
+    for (var j = 0; j <= this.numPointsV; j++)
+    {
+      var dj = j / this.numPointsV;
+
+      // TODO: Is this way of arranging the vertices correct?
+      this.vertices.push(new THREE.Vertex(this.surface.getPoint(dj, di)));
+      this.vertices.push(new THREE.Vertex(
+        this.surface.getPoint(dj, di + (1/this.numPointsU))));
+    }
+  }
+  // TODO: faces, normals, etc.
+};

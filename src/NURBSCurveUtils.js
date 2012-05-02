@@ -42,7 +42,7 @@ NURBSCurveBuilder = function ( curve, name ) {
   this.name = name || "";
 
   // curve mesh
-  this.curveGeometry = new THREE.NURBSCurveGeometry( this.curve, 100);
+  this.curveGeometry = new THREE.NURBSCurveGeometry( this.curve, 500);
 
   // TODO: remove this from here:
   this.curveGeometry.dynamic = true;
@@ -138,8 +138,8 @@ NURBSCurveBuilder.prototype.moveControlPoint = function( cpIndex, v ) {
 //       rebuild the whole curve, only the affected spans
 NURBSCurveBuilder.prototype.rebuild = function( ) {
 
-  v = this.curveGeometry.vertices;
-  n = this.curveGeometry.numPoints;
+  var v = this.curveGeometry.vertices;
+  var n = this.curveGeometry.numPoints;
 
   for (var i = 0; i < n; i++)
     v.push(new THREE.Vertex(this.curve.getPoint(i / (n-1))));
