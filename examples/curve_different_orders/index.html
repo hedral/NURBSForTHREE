@@ -1,0 +1,190 @@
+<!doctype html>
+<html>
+  <head>
+    <title>learningthree.js boiler plate for three.js</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    
+      
+    <script src="vendor/three.js/Three.js"></script>
+    <script src="vendor/three.js/Detector.js"></script>
+    <!-- https://github.com/mrdoob/stats.js -->
+    <script src="vendor/three.js/Stats.js"></script>
+
+    <script src="vendor/threex/THREEx.screenshot.js"></script>
+    <script src="vendor/threex/THREEx.FullScreen.js"></script>
+    <script src="vendor/threex/THREEx.WindowResize.js"></script>
+    <script src="vendor/threex.dragpancontrols.js"></script>
+
+    <script src="NURBSForTHREE/NURBSCurve.js"></script>
+    <script src="NURBSForTHREE/NURBSUtils.js"></script>
+
+    <link  href="css/main.css" rel="stylesheet"/>
+  </head>
+<body>
+  <!-- three.js container -->
+      <div id="container"></div>
+  <!-- info on screen display -->
+  <div id="info">
+    <div class="top">
+      <a href="https://github.com/sntx/nurbsforthree">NURBSForTHREE</a>
+      Example: Interpolate first and last points for curves of different 
+      orders<br/>
+    <div class="notes">
+      <pre>
+  Red   Curve: order = 2, knot vector = [0, 1, 2, 3, 4, 5, 6]
+  Green Curve: order = 3, knot vector = [0, 0, 0, 1, 2, 3, 3, 3]
+  Blue  Curve: order = 5, knot vector = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+      </pre>
+    </div>
+    </div>
+    <div class="bottom" id="inlineDoc" >
+      - <i>p</i> for screenshot
+    </div> 
+  </div> 
+
+  <script type="text/javascript">
+    var stats, scene, renderer;
+    var camera, cameraControl;
+
+
+    if( !init() )  animate();
+
+    // init the scene
+    function init(){
+
+      if( Detector.webgl ){
+        renderer = new THREE.WebGLRenderer({
+          antialias    : true,  // to get smoother output
+          preserveDrawingBuffer  : true  // to allow screenshot
+        });
+        renderer.setClearColorHex( 0xBBBBBB, 1 );
+      // uncomment if webgl is required
+      //}else{
+      //  Detector.addGetWebGLMessage();
+      //  return true;
+      }else{
+        renderer  = new THREE.CanvasRenderer();
+      }
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.getElementById('container').appendChild(renderer.domElement);
+
+      // add Stats.js - https://github.com/mrdoob/stats.js
+      stats = new Stats();
+      stats.domElement.style.position  = 'absolute';
+      stats.domElement.style.bottom  = '0px';
+      document.body.appendChild( stats.domElement );
+
+      // create a scene
+      scene = new THREE.Scene();
+
+      // put a camera in the scene
+      camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000 );
+      camera.position.set(0, 0, 5);
+      scene.add(camera);
+
+      // create a camera contol
+      cameraControls  = new THREEx.DragPanControls(camera)
+
+      // transparently support window resize
+      THREEx.WindowResize.bind(renderer, camera);
+      // allow 'p' to make screenshot
+      THREEx.Screenshot.bindKey(renderer);
+      // allow 'f' to go fullscreen where this feature is supported
+      if( THREEx.FullScreen.available() ){
+        THREEx.FullScreen.bindKey();    
+        document.getElementById('inlineDoc').innerHTML  += "- <i>f</i> for fullscreen";
+      }
+
+
+      // Create a list of control points
+      var points1 = [new THREE.Vector3(-1,   1,    0),
+                     new THREE.Vector3(-0.5, 0.25, 0),
+                     new THREE.Vector3( 0,   0,    0),
+                     new THREE.Vector3( 0.5, 0.25, 0),
+                     new THREE.Vector3( 1,   1,    0)];
+
+      var points2 = [new THREE.Vector3(-1,   1,    0.2),
+                     new THREE.Vector3(-0.5, 0.25, 0.2),
+                     new THREE.Vector3( 0,   0,    0.2),
+                     new THREE.Vector3( 0.5, 0.25, 0.2),
+                     new THREE.Vector3( 1,   1,    0.2)];
+
+      var points3 = [new THREE.Vector3(-1,   1,    0.4),
+                     new THREE.Vector3(-0.5, 0.25, 0.4),
+                     new THREE.Vector3( 0,   0,    0.4),
+                     new THREE.Vector3( 0.5, 0.25, 0.4),
+                     new THREE.Vector3( 1,   1,    0.4)];
+
+      // Higher orders produce smoother curves
+      var order1 = 2;
+      var order2 = 3;
+      var order3 = 5;
+
+      // Note that in order to interpolate a point, a value in the knot vector 
+      // needs to be repeated as many times as the curve's order.
+      //
+      // Also, a curve of order 2 produces straight lines connecting the control 
+      // points
+      //
+      var knots1 = [0, 1, 2, 3, 4, 5, 6];
+      var knots2 = [0, 0, 0, 1, 2, 3, 3, 3];
+      var knots3 = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1];
+
+      // Create the logical representaion of the curves
+      var curve1 = new THREE.NURBSCurve(points1, knots1, order1);
+      var curve2 = new THREE.NURBSCurve(points2, knots2, order2);
+      var curve3 = new THREE.NURBSCurve(points3, knots3, order3);
+
+      // create the curve geometries with resolution of 100 vertices
+      var geometry1 = new THREE.NURBSCurveGeometry(curve1, 100);
+      var geometry2 = new THREE.NURBSCurveGeometry(curve2, 100);
+      var geometry3 = new THREE.NURBSCurveGeometry(curve3, 100);
+
+
+      var material1 = new THREE.LineBasicMaterial({color:     0x550000,
+                                                   opacity:   1,
+                                                   linewidth: 2});
+      var material2 = new THREE.LineBasicMaterial({color:     0x005500,
+                                                   opacity:   1,
+                                                   linewidth: 2});
+      var material3 = new THREE.LineBasicMaterial({color:     0x000055,
+                                                   opacity:   1,
+                                                   linewidth: 2});
+
+      var mesh1 = new THREE.Line(geometry1, material1);
+      var mesh2 = new THREE.Line(geometry2, material2);
+      var mesh3 = new THREE.Line(geometry3, material3);
+
+      scene.add(mesh1);
+      scene.add(mesh2);
+      scene.add(mesh3);
+    }
+
+    // animation loop
+    function animate() {
+
+      // loop on request animation loop
+      // - it has to be at the begining of the function
+      // - see details at http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+      requestAnimationFrame( animate );
+
+      // do the render
+      render();
+
+      // update stats
+      stats.update();
+    }
+
+    // render the scene
+    function render() {
+
+      // update camera controls
+      cameraControls.update();
+
+      // actually render the scene
+      renderer.render( scene, camera );
+    }
+  </script>
+</body>
+</html>
